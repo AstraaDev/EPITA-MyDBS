@@ -97,7 +97,7 @@ void print_symbol(Elf64_Sym *symbol)
         break;
     };
 
-    printf("%016X\t%d\t%s\t%s\t%s\t%s\n", symbol->st_value, symbol->st_size,
+    printf("%016lu\t%lu\t%s\t%s\t%s\t%d\n", symbol->st_value, symbol->st_size,
            type_str, bind_str, vis_str, symbol->st_name);
 }
 
@@ -130,14 +130,14 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    Elf64_Shdr *section_header = elf_header + elf_header->e_shoff;
+    Elf64_Shdr *section_headers = (Elf64_Shdr *)((char *)elf_header + elf_header->e_shoff);
 
     printf("Value\t\t\tSize\tType\t\tBind\t\tVis\t\tUND\n");
     for (int i = 0; i < elf_header->e_shnum; i++)
     {
         if (section_headers[i].sh_type == SHT_SYMTAB)
         {
-            Elf64_Sym *symbols = elf_header + section_headers[i].sh_offset;
+            Elf64_Sym *symbols = (Elf64_Sym *)((char *)elf_header + section_headers[i].sh_offset);
             int count = section_headers[i].sh_size / sizeof(Elf64_Sym);
 
             for (int j = 0; j < count; j++)
@@ -146,6 +146,6 @@ int main(int argc, char *argv[])
     }
 
     close(fd);
-    munmap(elf_header, s.st_size;
+    munmap(elf_header, s.st_size);
     return 0;
 }
