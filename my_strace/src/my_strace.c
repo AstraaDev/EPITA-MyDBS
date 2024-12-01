@@ -22,14 +22,11 @@ int main(int argc, char *argv[], char *envp[])
         return 1;
     }
 
-    int status = 0;
-    long pt = 0;
-    struct user_regs_struct regs = { 0 };
     int pid = fork();
-
     switch (pid)
     {
         case -1:
+	    fprintf(stderr, "my_strace: Error: Fork failed");
             return 2;
         case 0:
             ptrace(PTRACE_TRACEME, 0, NULL, NULL);
@@ -37,20 +34,33 @@ int main(int argc, char *argv[], char *envp[])
         default:
             break;
     }
-    
+
+    int status = 0;
+    struct user_regs_struct regs = { 0 };
+    int syscall_in_progress = 0;
+
+    waitpid(pid, &status, 0);
+
     while (1)
     {
+	ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
         waitpid(pid, &status, 0);
+
         if (WIFEXITED(status))
             break;
 
-        pt = ptrace(PTRACE_PEEKUSER, pid, 8 * ORIG_RAX, NULL);
         ptrace(PTRACE_GETREGS, pid, NULL, &regs);
-	printf("%s() = %lld\n", get_syscall_name(pt), regs.rax);
-
-        ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
+	long syscall_number = regs.orig_rax;
+	
+	if (syscall_in_progress)
+	{	
+            fprintf(stderr, "%s() = %lld\n", get_syscall_name(syscall_number), regs.rax);
+    	    syscall_in_progress = 0;
+	}
+	else
+	    syscall_in_progress = 1;
     }
     
-    printf("program exited with code %d\n", 0);
+    fprintf(stderr, "program exited with code %d\n", WEXITSTATUS(status));
     return 0;
 }
