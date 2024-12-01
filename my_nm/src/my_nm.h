@@ -9,6 +9,6 @@
 #include <unistd.h>
 
 int check_elf(const char *filename);
-void print_symbol(Elf64_Sym *symbol);
+void print_symbol(Elf64_Sym *symbol, char *name_str);
 
 #endif /* !MY_NM_H */
