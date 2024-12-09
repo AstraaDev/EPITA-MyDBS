@@ -63,9 +63,15 @@ void printSyscallArgs(SysCall *sysArg, struct user_regs_struct regs,
                 break;
             }
             if (i)
-                fprintf(stderr, ", %s = %lld", sysArg->args[i].name, argVal);
+            {
+                fprintf(stderr, ", %s = ", sysArg->args[i].name);
+                sysArg->args[i].print_fonction(argVal);
+            }
             else
-                fprintf(stderr, "%s = %lld", sysArg->args[i].name, argVal);
+            {
+                fprintf(stderr, "%s = ", sysArg->args[i].name);
+                sysArg->args[i].print_fonction(argVal);
+            }
         }
         fprintf(stderr, ") = %lld\n", regs.rax);
     }
@@ -113,6 +119,7 @@ int main(int argc, char *argv[], char *envp[])
             break;
 
         ptrace(PTRACE_GETREGS, pid, NULL, &regs);
+
         long syscall_number = regs.orig_rax;
 
         if (syscall_in_progress)
