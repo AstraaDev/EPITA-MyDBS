@@ -1,0 +1,12 @@
+
+my_nm/compile_commands.json
+example/example1.c
+example/example1.o
+example/example1.c
+my_strace/src/utils.o
+my_strace/src/my_strace.o
+my_strace/my_strace
+my_strace/a.out
+my_nm/src/my_nm.o
+example/example1.c
+example/example1.c
