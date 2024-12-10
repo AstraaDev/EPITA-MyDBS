@@ -1,34 +1,50 @@
 #include "utils.h"
 
 #include <stdio.h>
+#include <sys/ptrace.h>
 
-void print_int(long long int ptr)
+void print_int(info data)
 {
-    fprintf(stderr, "%d", (int)ptr);
+    fprintf(stderr, "%d", (int)data.ptr);
 }
 
-void print_long(long long int ptr)
+void print_long(info data)
 {
-    fprintf(stderr, "%ld", (long)ptr);
+    fprintf(stderr, "%ld", (long)data.ptr);
 }
 
-void print_ptr(long long int ptr)
+void print_ptr(info data)
 {
-    fprintf(stderr, "%p", (void *)ptr);
+    if ((void *)data.ptr != NULL)
+    {
+        fprintf(stderr, "%p", (void *)data.ptr);
+    }
+    else
+    {
+        fprintf(stderr, "0x0");
+    }
 }
 
-void print_char(long long int ptr)
+void print_char(info data)
 {
-    fprintf(stderr, "%c", (char)ptr);
+    fprintf(stderr, "%c", (char)data.ptr);
 }
 
-void print_str(long long int ptr)
+void print_str(info data)
 {
-    (void)ptr;
-    fprintf(stderr, "string");
+    fprintf(stderr, "\"");
+
+    char s = 1;
+    char *ptr = (void *)data.ptr;
+    while (s != '\0')
+    {
+        s = (char)ptrace(PTRACE_PEEKDATA, data.pid, ptr++, NULL);
+        fprintf(stderr, "%c", s);
+    }
+    fprintf(stderr, "\"");
 }
 
-void print_hexa(long long int ptr)
+void print_hexa(info data)
 {
-    fprintf(stderr, "%x", (int)ptr);
+    fprintf(stderr, "%x", (int)data.ptr);
 }

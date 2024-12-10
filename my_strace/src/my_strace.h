@@ -351,7 +351,7 @@ char *syscall_names[] = { "read",
 typedef struct
 {
     char *name;
-    void (*print_fonction)(long long int ptr);
+    void (*print_fonction)(info data);
 } Arg;
 
 typedef struct

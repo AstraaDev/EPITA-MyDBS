@@ -30,7 +30,7 @@ SysCall *getArgSyscall(char *name)
 }
 
 void printSyscallArgs(SysCall *sysArg, struct user_regs_struct regs,
-                      int syscall_number)
+                      int syscall_number, int pid)
 {
     if (sysArg)
     {
@@ -62,15 +62,16 @@ void printSyscallArgs(SysCall *sysArg, struct user_regs_struct regs,
                 argVal = 0;
                 break;
             }
+            info data = { argVal, pid };
             if (i)
             {
                 fprintf(stderr, ", %s = ", sysArg->args[i].name);
-                sysArg->args[i].print_fonction(argVal);
+                sysArg->args[i].print_fonction(data);
             }
             else
             {
                 fprintf(stderr, "%s = ", sysArg->args[i].name);
-                sysArg->args[i].print_fonction(argVal);
+                sysArg->args[i].print_fonction(data);
             }
         }
         fprintf(stderr, ") = %lld\n", regs.rax);
@@ -125,7 +126,7 @@ int main(int argc, char *argv[], char *envp[])
         if (syscall_in_progress)
         {
             printSyscallArgs(getArgSyscall(get_syscall_name(syscall_number)),
-                             regs, syscall_number);
+                             regs, syscall_number, pid);
             syscall_in_progress = 0;
         }
         else

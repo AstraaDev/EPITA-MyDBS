@@ -1,11 +1,17 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-void print_int(long long int ptr);
-void print_long(long long int ptr);
-void print_ptr(long long int ptr);
-void print_char(long long int ptr);
-void print_str(long long int ptr);
-void print_hexa(long long int ptr);
+typedef struct
+{
+    long long int ptr;
+    int pid;
+} info;
+
+void print_int(info data);
+void print_long(info data);
+void print_ptr(info data);
+void print_char(info data);
+void print_str(info data);
+void print_hexa(info data);
 
 #endif /* !UTILS_H */
