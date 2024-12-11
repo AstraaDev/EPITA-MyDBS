@@ -7,31 +7,31 @@
 
 void print_register(struct user_regs_struct regs)
 {
-    printf("rax %lld", regs.rax);
-    printf("rbx %lld", regs.rbx);
-    printf("rcx %lld", regs.rcx);
-    printf("rdx %lld", regs.rdx);
-    printf("rsi %lld", regs.rsi);
-    printf("rdi %lld", regs.rdi);
-    printf("rbp %lld", regs.rbp);
-    printf("rsp %lld", regs.rsp);
-    printf("r8 %lld", regs.r8);
-    printf("r9 %lld", regs.r9);
-    printf("r10 %lld", regs.r10);
-    printf("r11 %lld", regs.r11);
-    printf("r12 %lld", regs.r12);
-    printf("r13 %lld", regs.r13);
-    printf("r14 %lld", regs.r14);
-    printf("r15 %lld", regs.r15);
-    printf("rip %lld", regs.rip);
-    printf("eflags %lld", regs.eflags);
-    printf("cs %lld", regs.cs);
-    printf("ss %lld", regs.ss);
-    printf("ds %lld", regs.ds);
-    printf("es %lld", regs.es);
-    printf("fs %lld", regs.fs);
-    printf("gs %lld", regs.gs);
-    printf("orig_rax %lld", regs.orig_rax);
+    printf("rax %lld\n", regs.rax);
+    printf("rbx %lld\n", regs.rbx);
+    printf("rcx %lld\n", regs.rcx);
+    printf("rdx %lld\n", regs.rdx);
+    printf("rsi %lld\n", regs.rsi);
+    printf("rdi %lld\n", regs.rdi);
+    printf("rbp %lld\n", regs.rbp);
+    printf("rsp %lld\n", regs.rsp);
+    printf("r8 %lld\n", regs.r8);
+    printf("r9 %lld\n", regs.r9);
+    printf("r10 %lld\n", regs.r10);
+    printf("r11 %lld\n", regs.r11);
+    printf("r12 %lld\n", regs.r12);
+    printf("r13 %lld\n", regs.r13);
+    printf("r14 %lld\n", regs.r14);
+    printf("r15 %lld\n", regs.r15);
+    printf("rip %lld\n", regs.rip);
+    printf("eflags %lld\n", regs.eflags);
+    printf("cs %lld\n", regs.cs);
+    printf("ss %lld\n", regs.ss);
+    printf("ds %lld\n", regs.ds);
+    printf("es %lld\n", regs.es);
+    printf("fs %lld\n", regs.fs);
+    printf("gs %lld\n", regs.gs);
+    printf("orig_rax %lld\n", regs.orig_rax);
 }
 
 int main(int argc, char *argv[], char *envp[])
@@ -56,7 +56,9 @@ int main(int argc, char *argv[], char *envp[])
     }
 
     int status = 0;
+
     struct user_regs_struct regs = { 0 };
+    long syscall_number;
 
     char user_input[4096] = { 0 };
 
@@ -67,26 +69,27 @@ int main(int argc, char *argv[], char *envp[])
     start:
         scanf("%s", user_input);
 
-        if (strcmp(user_input, "continue"))
+        if (!strcmp(user_input, "continue"))
         {
-            break;
+            ;
         }
-        else if (strcmp(user_input, "quit"))
+        else if (!strcmp(user_input, "quit"))
         {
+            ptrace(PTRACE_KILL, pid, NULL, NULL);
             return 0;
         }
-        else if (strcmp(user_input, "quit"))
+        else if (!strcmp(user_input, "kill"))
         {
-            // kill(pid, 0);
-            printf("kill\n"); // TODO
+            ptrace(PTRACE_KILL, pid, NULL, NULL);
+            break;
         }
-        else if (strcmp(user_input, "register"))
+        else if (!strcmp(user_input, "register"))
         {
             print_register(regs);
         }
         else
         {
-            printf("error");
+            printf("Bad argument !!!!\n");
             goto start;
         }
 
@@ -95,7 +98,12 @@ int main(int argc, char *argv[], char *envp[])
             ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
             waitpid(pid, &status, 0);
 
+            syscall_number = regs.orig_rax;
+
             if (WIFEXITED(status))
+                break;
+
+            if (syscall_number == -1)
                 break;
 
             ptrace(PTRACE_GETREGS, pid, NULL, &regs);
