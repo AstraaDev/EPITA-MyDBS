@@ -1,9 +1,10 @@
 #include "my_db.h"
 
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "utils.h"
 
 void print_register(struct user_regs_struct regs)
 {
@@ -32,6 +33,19 @@ void print_register(struct user_regs_struct regs)
     printf("fs 0x%llx\n", regs.fs);
     printf("gs 0x%llx\n", regs.gs);
     printf("orig_rax 0x%llx\n", regs.orig_rax);
+}
+
+void print_memdump(int flag, int count, void *ptr, int pid)
+{
+    (void)flag;
+    char *ptrTmp = ptr;
+    long long val;
+    for (int i = 0; i < count; i++)
+    {
+        val = ptrace(PTRACE_PEEKDATA, pid, ptrTmp, NULL);
+
+        printf("%p 0x%llx\n", ptrTmp++, val);
+    }
 }
 
 int main(int argc, char *argv[], char *envp[])
@@ -64,28 +78,49 @@ int main(int argc, char *argv[], char *envp[])
 
     waitpid(pid, &status, 0);
 
+    char **input_parse = NULL;
+    int nbArg = 0;
+
     while (1)
     {
         while (1)
         {
-            scanf("%s", user_input);
+            scanf("%[^\n]%*c", user_input); // little bug here without input
+            if (input_parse)
+            {
+                free_parse(input_parse);
+                nbArg = 0;
+            }
 
-            if (!strcmp(user_input, "continue"))
+            input_parse = parser(user_input, &nbArg);
+
+            if (input_parse == NULL)
+            {
+                continue;
+            }
+            else if (!strcmp(input_parse[0], "continue"))
             {
                 break;
             }
-            else if (!strcmp(user_input, "quit"))
+            else if (!strcmp(input_parse[0], "quit"))
             {
                 ptrace(PTRACE_KILL, pid, NULL, NULL);
+                free_parse(input_parse);
                 return 0;
             }
-            else if (!strcmp(user_input, "kill"))
+            else if (!strcmp(input_parse[0], "kill"))
             {
                 ptrace(PTRACE_KILL, pid, NULL, NULL);
             }
-            else if (!strcmp(user_input, "register"))
+            else if (!strcmp(input_parse[0], "register"))
             {
                 print_register(regs);
+            }
+            else if (!strcmp(input_parse[0], "x") && nbArg == 3)
+            {
+                int countMem = atoi(input_parse[1]);
+                void *ptrMem = (void *)strtol(input_parse[2], NULL, 16);
+                print_memdump(1, countMem, ptrMem, pid);
             }
             else
             {
@@ -111,5 +146,6 @@ int main(int argc, char *argv[], char *envp[])
     }
 
     fprintf(stderr, "program exited with code %d\n", WEXITSTATUS(status));
+    free_parse(input_parse);
     return 0;
 }
