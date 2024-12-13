@@ -1,52 +1,6 @@
 #include "my_db.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "utils.h"
-
-void print_register(struct user_regs_struct regs)
-{
-    printf("rax 0x%llx\n", regs.rax);
-    printf("rbx 0x%llx\n", regs.rbx);
-    printf("rcx 0x%llx\n", regs.rcx);
-    printf("rdx 0x%llx\n", regs.rdx);
-    printf("rsi 0x%llx\n", regs.rsi);
-    printf("rdi 0x%llx\n", regs.rdi);
-    printf("rbp 0x%llx\n", regs.rbp);
-    printf("rsp 0x%llx\n", regs.rsp);
-    printf("r8 0x%llx\n", regs.r8);
-    printf("r9 0x%llx\n", regs.r9);
-    printf("r10 0x%llx\n", regs.r10);
-    printf("r11 0x%llx\n", regs.r11);
-    printf("r12 0x%llx\n", regs.r12);
-    printf("r13 0x%llx\n", regs.r13);
-    printf("r14 0x%llx\n", regs.r14);
-    printf("r15 0x%llx\n", regs.r15);
-    printf("rip 0x%llx\n", regs.rip);
-    printf("eflags 0x%llx\n", regs.eflags);
-    printf("cs 0x%llx\n", regs.cs);
-    printf("ss 0x%llx\n", regs.ss);
-    printf("ds 0x%llx\n", regs.ds);
-    printf("es 0x%llx\n", regs.es);
-    printf("fs 0x%llx\n", regs.fs);
-    printf("gs 0x%llx\n", regs.gs);
-    printf("orig_rax 0x%llx\n", regs.orig_rax);
-}
-
-void print_memdump(int flag, int count, void *ptr, int pid)
-{
-    (void)flag;
-    char *ptrTmp = ptr;
-    long long val;
-    for (int i = 0; i < count; i++)
-    {
-        val = ptrace(PTRACE_PEEKDATA, pid, ptrTmp, NULL);
-
-        printf("%p 0x%llx\n", ptrTmp++, val);
-    }
-}
 
 int main(int argc, char *argv[], char *envp[])
 {
@@ -85,7 +39,7 @@ int main(int argc, char *argv[], char *envp[])
     {
         while (1)
         {
-            scanf("%[^\n]%*c", user_input); // little bug here without input
+            fgets(user_input, 4096, stdin);
             if (input_parse)
             {
                 free_parse(input_parse);
@@ -94,7 +48,7 @@ int main(int argc, char *argv[], char *envp[])
 
             input_parse = parser(user_input, &nbArg);
 
-            if (input_parse == NULL)
+            if (input_parse[0] == NULL)
             {
                 continue;
             }
@@ -121,6 +75,18 @@ int main(int argc, char *argv[], char *envp[])
                 int countMem = atoi(input_parse[1]);
                 void *ptrMem = (void *)strtol(input_parse[2], NULL, 16);
                 print_memdump(1, countMem, ptrMem, pid);
+            }
+            else if (!strcmp(input_parse[0], "d") && nbArg == 3)
+            {
+                int countMem = atoi(input_parse[1]);
+                void *ptrMem = (void *)strtol(input_parse[2], NULL, 16);
+                print_memdump(2, countMem, ptrMem, pid);
+            }
+            else if (!strcmp(input_parse[0], "u") && nbArg == 3)
+            {
+                int countMem = atoi(input_parse[1]);
+                void *ptrMem = (void *)strtol(input_parse[2], NULL, 16);
+                print_memdump(3, countMem, ptrMem, pid);
             }
             else
             {

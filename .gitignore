@@ -11,3 +11,7 @@ my_nm/src/my_nm.o
 example/example1.c
 example/example1.c
 example/example1.c
+*.o
+/example
+/example
+*.out
