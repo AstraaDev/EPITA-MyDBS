@@ -35,6 +35,10 @@ int main(int argc, char *argv[], char *envp[])
     char **input_parse = NULL;
     int nbArg = 0;
 
+    int stepFlag = 0;
+    int countStep = 0;
+    int currentStep = 0;
+
     while (1)
     {
         while (1)
@@ -52,21 +56,21 @@ int main(int argc, char *argv[], char *envp[])
             {
                 continue;
             }
-            else if (!strcmp(input_parse[0], "continue"))
+            else if (!strcmp(input_parse[0], "continue") && nbArg == 1)
             {
                 break;
             }
-            else if (!strcmp(input_parse[0], "quit"))
+            else if (!strcmp(input_parse[0], "quit") && nbArg == 1)
             {
                 ptrace(PTRACE_KILL, pid, NULL, NULL);
                 free_parse(input_parse);
                 return 0;
             }
-            else if (!strcmp(input_parse[0], "kill"))
+            else if (!strcmp(input_parse[0], "kill") && nbArg == 1)
             {
                 ptrace(PTRACE_KILL, pid, NULL, NULL);
             }
-            else if (!strcmp(input_parse[0], "register"))
+            else if (!strcmp(input_parse[0], "register") && nbArg == 1)
             {
                 print_register(regs);
             }
@@ -88,14 +92,36 @@ int main(int argc, char *argv[], char *envp[])
                 void *ptrMem = (void *)strtol(input_parse[2], NULL, 16);
                 print_memdump(3, countMem, ptrMem, pid);
             }
+            else if ((!strcmp(input_parse[0], "next"))
+                     && (nbArg == 1 || nbArg == 2))
+            {
+                switch (nbArg)
+                {
+                case 1:
+                    stepFlag = 1;
+                    countStep = 1;
+                    break;
+                case 2:
+                    stepFlag = 1;
+                    countStep = atoi(input_parse[1]);
+                    break;
+                }
+                break;
+            }
             else
             {
                 printf("Bad argument !\n");
             }
         }
 
+        currentStep = 0;
+
         while (1)
         {
+            if (stepFlag)
+                if (currentStep == countStep)
+                    break;
+
             ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
             waitpid(pid, &status, 0);
 
@@ -108,7 +134,11 @@ int main(int argc, char *argv[], char *envp[])
                 break;
 
             ptrace(PTRACE_GETREGS, pid, NULL, &regs);
+
+            currentStep++;
         }
+        stepFlag = 0;
+        countStep = 0;
     }
 
     fprintf(stderr, "program exited with code %d\n", WEXITSTATUS(status));
