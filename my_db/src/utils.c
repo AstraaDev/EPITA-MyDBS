@@ -1,5 +1,6 @@
 #include "utils.h"
 
+#include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 struct brk_fifo *fifo_init(void)
@@ -16,7 +17,7 @@ struct brk_fifo *fifo_init(void)
     return new_queue;
 }
 
-void fifo_push(struct brk_fifo *fifo, size_t addr, char *symbol)
+void fifo_push(struct brk_fifo *fifo, void *addr, char *symbol)
 {
     struct brk_struct *to_add = malloc(sizeof(struct brk_struct));
 
@@ -137,7 +138,7 @@ void print_memdump(int flag, int count, void *ptr, int pid)
     }
 }
 
-void get_ptr_func(char *name, int pid)
+void *get_ptr_func(char *name, int pid)
 {
     char exe_path[256];
     snprintf(exe_path, sizeof(exe_path), "/proc/%d/exe", pid);
@@ -149,6 +150,8 @@ void get_ptr_func(char *name, int pid)
     {
         close(fd);
     }
+
+    void *ptr = NULL;
 
     Elf64_Ehdr *elf_header =
         mmap(NULL, s.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
@@ -176,10 +179,11 @@ void get_ptr_func(char *name, int pid)
                     continue;
 
                 if (!strcmp(symbol_name, name))
-                    printf("%p\n", (void *)symbols[j].st_value);
+                    ptr = (void *)symbols[j].st_value;
             }
         }
     }
 
     close(fd);
+    return ptr;
 }

@@ -113,27 +113,27 @@ int main(int argc, char *argv[], char *envp[])
                 }
                 break;
             }
-            else if (!strcmp(input_parse[0], "b") && nbArg == 2)
+            else if ((!strcmp(input_parse[0], "break")
+                      || !strcmp(input_parse[0], "b"))
+                     && nbArg == 2)
             {
-                get_ptr_func(input_parse[1], pid);
+                char *brksymbol =
+                    malloc(sizeof(char) * strlen(input_parse[1]) + 1);
+                strcpy(brksymbol, input_parse[1]);
+                fifo_push(brkfifo, get_ptr_func(input_parse[1], pid),
+                          brksymbol);
             }
-	    else if ((!strcmp(input_parse[0], "break") || !strcmp(input_parse[0], "b")) && nbArg == 2)
-	    {
-		char *brksymbol = malloc(sizeof(char) * strlen(input_parse[1]) + 1);
-		strcpy(brksymbol, input_parse[1]);
-		fifo_push(brkfifo, 0, brksymbol);
-	    }
-	    else if (!strcmp(input_parse[0], "blist") && nbArg == 1)
-	    {
-		int i = 0;
-		struct brk_struct *blist = brkfifo->head;
-		while (blist != NULL)
-		{
-		    printf("%d 0x%lx %s\n", i+1, blist->addr, blist->symbol);
-		    blist = blist->next;
-		    i++;
-		}
-	    }
+            else if (!strcmp(input_parse[0], "blist") && nbArg == 1)
+            {
+                int i = 0;
+                struct brk_struct *blist = brkfifo->head;
+                while (blist != NULL)
+                {
+                    printf("%d %p %s\n", i + 1, blist->addr, blist->symbol);
+                    blist = blist->next;
+                    i++;
+                }
+            }
             else
             {
                 printf("Bad argument !\n");
