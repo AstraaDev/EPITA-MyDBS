@@ -42,6 +42,8 @@ int main(int argc, char *argv[], char *envp[])
     int countStep = 0;
     int currentStep = 0;
 
+    struct brk_fifo *brkfifo = fifo_init();
+
     while (1)
     {
         while (1)
@@ -115,6 +117,23 @@ int main(int argc, char *argv[], char *envp[])
             {
                 get_ptr_func(input_parse[1], pid);
             }
+	    else if ((!strcmp(input_parse[0], "break") || !strcmp(input_parse[0], "b")) && nbArg == 2)
+	    {
+		char *brksymbol = malloc(sizeof(char) * strlen(input_parse[1]) + 1);
+		strcpy(brksymbol, input_parse[1]);
+		fifo_push(brkfifo, 0, brksymbol);
+	    }
+	    else if (!strcmp(input_parse[0], "blist") && nbArg == 1)
+	    {
+		int i = 0;
+		struct brk_struct *blist = brkfifo->head;
+		while (blist != NULL)
+		{
+		    printf("%d 0x%lx %s\n", i+1, blist->addr, blist->symbol);
+		    blist = blist->next;
+		    i++;
+		}
+	    }
             else
             {
                 printf("Bad argument !\n");
