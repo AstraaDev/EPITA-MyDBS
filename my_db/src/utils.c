@@ -1,5 +1,41 @@
 #include "utils.h"
 
+struct brk_fifo *fifo_init(void)
+{
+    struct brk_fifo *new_queue = malloc(sizeof(struct brk_fifo));
+
+    if (!new_queue)
+        return NULL;
+
+    new_queue->head = NULL;
+    new_queue->tail = NULL;
+    new_queue->size = 0;
+
+    return new_queue;
+}
+
+void fifo_push(struct brk_fifo *fifo, size_t addr, char *symbol)
+{
+    struct brk_struct *to_add = malloc(sizeof(struct brk_struct));
+
+    to_add->addr = addr;
+    to_add->symbol = symbol;
+    to_add->next = NULL;
+
+    if (fifo->tail == NULL)
+    {
+        fifo->head = to_add;
+        fifo->tail = to_add;
+    }
+    else
+    {
+        fifo->tail->next = to_add;
+        fifo->tail = to_add;
+    }
+
+    fifo->size++;
+}
+
 void free_parse(char **parse)
 {
     int i = 0;

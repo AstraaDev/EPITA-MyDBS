@@ -12,6 +12,22 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+struct brk_struct
+{
+    size_t addr;
+    char *symbol;
+    struct brk_struct *next;
+};
+
+struct brk_fifo
+{
+    struct brk_struct *head;
+    struct brk_struct *tail;
+    size_t size;
+};
+
+struct brk_fifo *fifo_init(void);
+void fifo_push(struct brk_fifo *fifo, size_t addr, char *symbol);
 char **parser(char *input, int *nbArg);
 void free_parse(char **parse);
 void print_memdump(int flag, int count, void *ptr, int pid);
