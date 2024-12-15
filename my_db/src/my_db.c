@@ -69,6 +69,7 @@ int main(int argc, char *argv[], char *envp[])
             {
                 ptrace(PTRACE_KILL, pid, NULL, NULL);
                 free_parse(input_parse);
+		fifo_destroy(brkfifo);
                 return 0;
             }
             else if (!strcmp(input_parse[0], "kill") && nbArg == 1)
@@ -134,6 +135,14 @@ int main(int argc, char *argv[], char *envp[])
                     i++;
                 }
             }
+	    else if (!strcmp(input_parse[0], "bdel") && nbArg == 2)
+	    {
+		size_t index = atoi(input_parse[1]);
+		if (index <= 0 || index > brkfifo->size)
+		    printf("Bad argument !\n");
+		else
+		    fifo_pop(brkfifo, index);
+	    }
             else
             {
                 printf("Bad argument !\n");
@@ -166,8 +175,9 @@ int main(int argc, char *argv[], char *envp[])
         stepFlag = 0;
         countStep = 0;
     }
-
+    
     fprintf(stderr, "program exited with code %d\n", WEXITSTATUS(status));
     free_parse(input_parse);
+    fifo_destroy(brkfifo);
     return 0;
 }

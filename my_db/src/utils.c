@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
+
 struct brk_fifo *fifo_init(void)
 {
     struct brk_fifo *new_queue = malloc(sizeof(struct brk_fifo));
@@ -37,6 +38,52 @@ void fifo_push(struct brk_fifo *fifo, void *addr, char *symbol)
     }
 
     fifo->size++;
+}
+
+void fifo_pop(struct brk_fifo *fifo, size_t index)
+{
+    if (fifo == NULL || fifo->head == NULL)
+        return;
+
+    struct brk_struct *current = fifo->head;
+    struct brk_struct *previous = NULL;
+
+    for (size_t i = 0; i < index - 1; i++)
+    {
+        previous = current;
+        current = current->next;
+    }
+
+    if (previous == NULL)
+    {
+        fifo->head = current->next;
+        if (fifo->head == NULL)
+            fifo->tail = NULL;
+    } 
+    else
+    {
+        previous->next = current->next;
+        if (current->next == NULL)
+            fifo->tail = previous;
+    }
+
+    free(current);
+    fifo->size--;
+}
+
+void fifo_destroy(struct brk_fifo *fifo)
+{
+    struct brk_struct *current = fifo->head;
+
+    while (current)
+    {
+        struct brk_struct *to_free = current;
+        current = current->next;
+	free(to_free->symbol);
+        free(to_free);
+    }
+
+    free(fifo);
 }
 
 void free_parse(char **parse)

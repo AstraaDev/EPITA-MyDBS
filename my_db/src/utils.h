@@ -32,6 +32,8 @@ struct brk_fifo
 
 struct brk_fifo *fifo_init(void);
 void fifo_push(struct brk_fifo *fifo, void *addr, char *symbol);
+void fifo_pop(struct brk_fifo *fifo, size_t index);
+void fifo_destroy(struct brk_fifo *fifo);
 char **parser(char *input, int *nbArg);
 void free_parse(char **parse);
 void print_memdump(int flag, int count, void *ptr, int pid);
