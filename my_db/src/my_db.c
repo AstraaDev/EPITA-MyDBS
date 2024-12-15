@@ -1,5 +1,8 @@
 #include "my_db.h"
 
+#include <stdio.h>
+#include <sys/ptrace.h>
+
 #include "utils.h"
 
 int main(int argc, char *argv[], char *envp[])
@@ -107,6 +110,10 @@ int main(int argc, char *argv[], char *envp[])
                     break;
                 }
                 break;
+            }
+            else if (!strcmp(input_parse[0], "b") && nbArg == 2)
+            {
+                get_ptr_func(input_parse[1], pid);
             }
             else
             {

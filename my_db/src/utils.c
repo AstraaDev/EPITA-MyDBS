@@ -1,5 +1,8 @@
 #include "utils.h"
 
+#include <string.h>
+#include <unistd.h>
+
 void free_parse(char **parse)
 {
     int i = 0;
@@ -97,4 +100,51 @@ void print_memdump(int flag, int count, void *ptr, int pid)
             break;
         }
     }
+}
+
+void get_ptr_func(char *name, int pid)
+{
+    char exe_path[256];
+    snprintf(exe_path, sizeof(exe_path), "/proc/%d/exe", pid);
+
+    int fd = open(exe_path, O_RDONLY);
+
+    struct stat s = { 0 };
+    if ((stat(exe_path, &s)) == -1)
+    {
+        close(fd);
+    }
+
+    Elf64_Ehdr *elf_header =
+        mmap(NULL, s.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+    Elf64_Shdr *section_headers =
+        (Elf64_Shdr *)((char *)elf_header + elf_header->e_shoff);
+
+    for (int i = 0; i < elf_header->e_shnum; i++)
+    {
+        if (section_headers[i].sh_type == SHT_SYMTAB)
+        {
+            Elf64_Shdr strtab_header =
+                section_headers[section_headers[i].sh_link];
+            char *strtab = (char *)elf_header + strtab_header.sh_offset;
+
+            Elf64_Sym *symbols = (Elf64_Sym *)((char *)elf_header
+                                               + section_headers[i].sh_offset);
+            int count = section_headers[i].sh_size / sizeof(Elf64_Sym);
+
+            for (int j = 0; j < count; j++)
+            {
+                char *symbol_name = &strtab[symbols[j].st_name];
+
+                if (symbols[j].st_shndx > elf_header->e_ehsize)
+                    continue;
+
+                if (!strcmp(symbol_name, name))
+                    printf("%p\n", (void *)symbols[j].st_value);
+            }
+        }
+    }
+
+    close(fd);
 }
