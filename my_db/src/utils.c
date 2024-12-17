@@ -1,6 +1,8 @@
 #include "utils.h"
 
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -18,12 +20,14 @@ struct brk_fifo *fifo_init(void)
     return new_queue;
 }
 
-void fifo_push(struct brk_fifo *fifo, void *addr, char *symbol)
+void fifo_push(struct brk_fifo *fifo, void *addr, char *symbol,
+               unsigned long oldVal)
 {
     struct brk_struct *to_add = malloc(sizeof(struct brk_struct));
 
     to_add->addr = addr;
     to_add->symbol = symbol;
+    to_add->oldVal = oldVal;
     to_add->next = NULL;
 
     if (fifo->tail == NULL)
@@ -59,7 +63,7 @@ void fifo_pop(struct brk_fifo *fifo, size_t index)
         fifo->head = current->next;
         if (fifo->head == NULL)
             fifo->tail = NULL;
-    } 
+    }
     else
     {
         previous->next = current->next;
@@ -67,8 +71,24 @@ void fifo_pop(struct brk_fifo *fifo, size_t index)
             fifo->tail = previous;
     }
 
+    free(current->symbol);
     free(current);
     fifo->size--;
+}
+
+struct brk_struct *fifo_get(struct brk_fifo *fifo, size_t index)
+{
+    if (fifo == NULL || fifo->head == NULL)
+        return NULL;
+
+    struct brk_struct *current = fifo->head;
+
+    for (size_t i = 0; i < index - 1; i++)
+    {
+        current = current->next;
+    }
+
+    return current;
 }
 
 void fifo_destroy(struct brk_fifo *fifo)
@@ -79,7 +99,7 @@ void fifo_destroy(struct brk_fifo *fifo)
     {
         struct brk_struct *to_free = current;
         current = current->next;
-	free(to_free->symbol);
+        free(to_free->symbol);
         free(to_free);
     }
 

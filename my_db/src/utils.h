@@ -20,6 +20,7 @@ struct brk_struct
 {
     void *addr;
     char *symbol;
+    unsigned long oldVal;
     struct brk_struct *next;
 };
 
@@ -31,8 +32,10 @@ struct brk_fifo
 };
 
 struct brk_fifo *fifo_init(void);
-void fifo_push(struct brk_fifo *fifo, void *addr, char *symbol);
+void fifo_push(struct brk_fifo *fifo, void *addr, char *symbol,
+               unsigned long oldVal);
 void fifo_pop(struct brk_fifo *fifo, size_t index);
+struct brk_struct *fifo_get(struct brk_fifo *fifo, size_t index);
 void fifo_destroy(struct brk_fifo *fifo);
 char **parser(char *input, int *nbArg);
 void free_parse(char **parse);
