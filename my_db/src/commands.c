@@ -1,5 +1,7 @@
 #include "commands.h"
 
+#include <stdio.h>
+
 int prog_next(char **input_parse, int nbArg, int pid, long *syscall_number,
               struct user_regs_struct *regs)
 {
@@ -163,4 +165,21 @@ void prog_bdel(char **input_parse, int pid, struct brk_fifo *brkfifo,
     }
 }
 
-void prog_help();
+void prog_help()
+{
+    printf("+---------------------------------------+\n");
+    printf("|             COMMANDS LIST             |\n");
+    printf("+---------------------------------------+\n");
+    printf("| next     -> Passer à l'étape suivante |\n");
+    printf("| continue -> Continuer le processus    |\n");
+    printf("| register -> Dump les registres        |\n");
+    printf("| break    -> Interrompre le processus  |\n");
+    printf("| blist    -> Liste des breakpoints     |\n");
+    printf("| bdel     -> Supprimer un breakpoint   |\n");
+    printf("| x        -> Dump en hexa une valeur   |\n");
+    printf("| u        -> Dump en signed int        |\n");
+    printf("| d        -> Dump en int               |\n");
+    printf("| kill     -> Kill le programme fils    |\n");
+    printf("| quit     -> Quitte le programme       |\n");
+    printf("+---------------------------------------+\n");
+}

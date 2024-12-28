@@ -105,6 +105,10 @@ int main(int argc, char *argv[], char *envp[])
         {
             prog_bdel(input_parse, pid, brkfifo, &regs);
         }
+        else if (!strcmp(input_parse[0], "help"))
+        {
+            prog_help();
+        }
         else
         {
             printf("Bad argument !\n");
