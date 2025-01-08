@@ -1,9 +1,12 @@
 #include "commands.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ptrace.h>
 
 int prog_next(char **input_parse, int nbArg, int pid, long *syscall_number,
-              struct user_regs_struct *regs)
+              struct user_regs_struct *regs, struct brk_struct *blist)
 {
     int status = 0;
     int countStep;
@@ -22,19 +25,46 @@ int prog_next(char **input_parse, int nbArg, int pid, long *syscall_number,
 
     while (1)
     {
-        if (currentStep == countStep)
+        if (currentStep >= countStep)
             break;
 
-        ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
-        waitpid(pid, &status, 0);
+        ptrace(PTRACE_GETREGS, pid, NULL, regs);
 
-        *syscall_number = regs->orig_rax;
+        *syscall_number = regs->rax;
+
+        if (*syscall_number == -1)
+        {
+            while (blist != NULL)
+            {
+                if ((unsigned long)regs->rip - 1 == (unsigned long)blist->addr)
+                {
+                    ptrace(PTRACE_POKETEXT, pid, blist->addr, blist->oldVal);
+
+                    regs->rip = (long long unsigned int)blist->addr;
+
+                    ptrace(PTRACE_SETREGS, pid, NULL, regs);
+
+                    ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
+
+                    waitpid(pid, &status, 0);
+
+                    unsigned long br_value = (blist->oldVal & ~0xFF) | 0xCC;
+
+                    ptrace(PTRACE_POKETEXT, pid, blist->addr, br_value);
+
+                    break;
+                }
+                blist = blist->next;
+            }
+        }
+
+        ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
+        waitpid(pid, &status, 0);
 
         if (WIFEXITED(status))
             break;
 
-        if (*syscall_number == -1)
-            break;
+        // prog_backtrace(pid, regs);
 
         currentStep++;
     }
@@ -89,7 +119,97 @@ void prog_register(int pid, struct user_regs_struct *regs)
 void prog_memdump(char **input_parse, int pid)
 {
     int countMem = atoi(input_parse[1]);
-    void *ptrMem = (void *)strtol(input_parse[2], NULL, 16);
+
+    void *ptrMem;
+
+    if (input_parse[2][0] == '$')
+    {
+        struct user_regs_struct regs;
+        ptrace(PTRACE_GETREGS, pid, NULL, &regs);
+
+        if (!strcmp(input_parse[2], "$rax"))
+        {
+            ptrMem = (void *)regs.rax;
+        }
+        else if (!strcmp(input_parse[2], "$rbx"))
+        {
+            ptrMem = (void *)regs.rbx;
+        }
+        else if (!strcmp(input_parse[2], "$rcx"))
+        {
+            ptrMem = (void *)regs.rcx;
+        }
+        else if (!strcmp(input_parse[2], "$rdx"))
+        {
+            ptrMem = (void *)regs.rdx;
+        }
+        else if (!strcmp(input_parse[2], "$rsi"))
+        {
+            ptrMem = (void *)regs.rsi;
+        }
+        else if (!strcmp(input_parse[2], "$rdi"))
+        {
+            ptrMem = (void *)regs.rdi;
+        }
+        else if (!strcmp(input_parse[2], "$rbp"))
+        {
+            ptrMem = (void *)regs.rbp;
+        }
+        else if (!strcmp(input_parse[2], "$rsp"))
+        {
+            ptrMem = (void *)regs.rsp;
+        }
+        else if (!strcmp(input_parse[2], "$r8"))
+        {
+            ptrMem = (void *)regs.r8;
+        }
+        else if (!strcmp(input_parse[2], "$r9"))
+        {
+            ptrMem = (void *)regs.r9;
+        }
+        else if (!strcmp(input_parse[2], "$r10"))
+        {
+            ptrMem = (void *)regs.r10;
+        }
+        else if (!strcmp(input_parse[2], "$r11"))
+        {
+            ptrMem = (void *)regs.r11;
+        }
+        else if (!strcmp(input_parse[2], "$r12"))
+        {
+            ptrMem = (void *)regs.r12;
+        }
+        else if (!strcmp(input_parse[2], "$r13"))
+        {
+            ptrMem = (void *)regs.r13;
+        }
+        else if (!strcmp(input_parse[2], "$r14"))
+        {
+            ptrMem = (void *)regs.r14;
+        }
+        else if (!strcmp(input_parse[2], "$r15"))
+        {
+            ptrMem = (void *)regs.r15;
+        }
+        else if (!strcmp(input_parse[2], "$rip"))
+        {
+            ptrMem = (void *)regs.rip;
+        }
+        else
+        {
+            printf("invalid register !!!\n");
+            return;
+        }
+    }
+    else if (input_parse[2][0] == '0'
+             && (input_parse[2][1] == 'x' || input_parse[2][1] == 'X'))
+    {
+        ptrMem = (void *)strtol(input_parse[2], NULL, 16);
+    }
+    else
+    {
+        ptrMem = (void *)atol(input_parse[2]);
+    }
 
     switch (input_parse[0][0])
     {
@@ -118,6 +238,13 @@ void prog_break(char **input_parse, int pid, struct brk_fifo *brkfifo)
     }
 
     unsigned long aligned_address = 0x555555554000 + (unsigned long)ptr + 8;
+
+    if (aligned_address == 0x555555554008)
+    {
+        printf("Name or pointeur invalide.\n");
+        free(brksymbol);
+        return;
+    }
 
     errno = 0;
     long data = ptrace(PTRACE_PEEKTEXT, pid, (void *)aligned_address, NULL);
@@ -182,4 +309,20 @@ void prog_help()
     printf("| kill     -> Kill le programme fils    |\n");
     printf("| quit     -> Quitte le programme       |\n");
     printf("+---------------------------------------+\n");
+}
+
+void prog_backtrace(int pid, struct user_regs_struct *regs)
+{
+    ptrace(PTRACE_GETREGS, pid, NULL, regs);
+    uintptr_t rbp = regs->rbp;
+
+    uintptr_t return_address;
+
+    while (return_address != 0)
+    {
+        return_address = ptrace(PTRACE_PEEKDATA, pid, rbp, NULL);
+        printf("Return address: %lx\n", return_address);
+
+        rbp = rbp - sizeof(uintptr_t);
+    }
 }

@@ -87,7 +87,8 @@ int main(int argc, char *argv[], char *envp[])
         else if ((!strcmp(input_parse[0], "next"))
                  && (nbArg == 1 || nbArg == 2))
         {
-            if (prog_next(input_parse, nbArg, pid, &syscall_number, &regs))
+            if (prog_next(input_parse, nbArg, pid, &syscall_number, &regs,
+                          brkfifo->head))
                 break;
         }
         else if ((!strcmp(input_parse[0], "break")
@@ -108,6 +109,10 @@ int main(int argc, char *argv[], char *envp[])
         else if (!strcmp(input_parse[0], "help"))
         {
             prog_help();
+        }
+        else if (!strcmp(input_parse[0], "bt") && nbArg == 1)
+        {
+            prog_backtrace(pid, &regs);
         }
         else
         {

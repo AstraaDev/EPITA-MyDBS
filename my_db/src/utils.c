@@ -190,18 +190,19 @@ void print_memdump(int flag, int count, void *ptr, int pid)
         switch (flag)
         {
         case 1:
-            printf("%p 0x%llx\n", ptrTmp++, val);
+            printf("%p 0x%llx\n", ptrTmp, val);
             break;
         case 2:
-            printf("%p %lld\n", ptrTmp++, (long long)val);
+            printf("%p %lld\n", ptrTmp, (long long)val);
             break;
         case 3:
-            printf("%p %llu\n", ptrTmp++, (unsigned long long)val);
+            printf("%p %llu\n", ptrTmp, (unsigned long long)val);
             break;
         default:
-            printf("%p 0x%llx\n", ptrTmp++, val);
+            printf("%p 0x%llx\n", ptrTmp, val);
             break;
         }
+        ptrTmp += sizeof(uintptr_t);
     }
 }
 
