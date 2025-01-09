@@ -8,6 +8,34 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <stdlib.h>
+
+long *fbd_sys = NULL;
+size_t fbd_count = 0;
+
+int is_sys_fbd(long syscall_number)
+{
+    for (size_t i = 0; i < fbd_count; i++)
+        if (fbd_sys[i] == syscall_number)
+            return 1;
+    return 0;
+}
+
+void load_fbd_sys(int argc, char *argv[])
+{
+    fbd_count = argc - 2;
+    if (fbd_count > 0)
+    {
+        fbd_sys = malloc(fbd_count * sizeof(long));
+        if (!fbd_sys)
+	{
+            fprintf(stderr, "Error: Unable to allocate memory for forbidden syscalls.\n");
+            exit(EXIT_FAILURE);
+        }
+        for (size_t i = 0; i < fbd_count; i++)
+            fbd_sys[i] = atol(argv[i + 2]);
+    }
+}
 
 char *get_syscall_name(long syscall_number)
 {
@@ -86,11 +114,13 @@ void printSyscallArgs(SysCall *sysArg, struct user_regs_struct regs,
 
 int main(int argc, char *argv[], char *envp[])
 {
-    if (argc != 2)
+    if (argc < 2)
     {
-        fprintf(stderr, "my_strace: Usage: ./my_strace <file_path>\n");
+        fprintf(stderr, "my_strace: Usage: ./my_strace <file_path> [forbidden_syscalls_numbers]\n");
         return 1;
     }
+
+    load_fbd_sys(argc, argv);
 
     int pid = fork();
     switch (pid)
@@ -125,14 +155,23 @@ int main(int argc, char *argv[], char *envp[])
 
         if (syscall_in_progress)
         {
-            printSyscallArgs(getArgSyscall(get_syscall_name(syscall_number)),
-                             regs, syscall_number, pid);
-            syscall_in_progress = 0;
+	    if (is_sys_fbd(syscall_number))
+            {
+		regs.rax = -1;
+		ptrace(PTRACE_SETREGS, pid, NULL, &regs);
+                fprintf(stderr, "forbidden syscall blocked: %s\n", get_syscall_name(syscall_number));
+            }
+	    else
+                printSyscallArgs(getArgSyscall(get_syscall_name(syscall_number)), regs, syscall_number, pid);
+	    syscall_in_progress = 0;
         }
         else
-            syscall_in_progress = 1;
+	{
+	    syscall_in_progress = 1;
+	}
     }
-
+    
+    free(fbd_sys);
     fprintf(stderr, "program exited with code %d\n", WEXITSTATUS(status));
     return 0;
 }
