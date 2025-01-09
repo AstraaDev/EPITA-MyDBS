@@ -255,3 +255,45 @@ void *get_ptr_func(char *name, int pid)
     close(fd);
     return ptr;
 }
+
+void over_br(int pid, struct brk_struct *blist, int *status)
+{
+    struct user_regs_struct regs = { 0 };
+    ptrace(PTRACE_GETREGS, pid, NULL, &regs);
+
+    while (blist != NULL)
+    {
+        if ((unsigned long)regs.rip - 1 == (unsigned long)blist->addr)
+        {
+            ptrace(PTRACE_POKETEXT, pid, blist->addr, blist->oldVal);
+
+            regs.rip = (long long unsigned int)blist->addr;
+
+            ptrace(PTRACE_SETREGS, pid, NULL, &regs);
+
+            ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
+
+            waitpid(pid, status, 0);
+
+            unsigned long br_value = (blist->oldVal & ~0xFF) | 0xCC;
+
+            ptrace(PTRACE_POKETEXT, pid, blist->addr, br_value);
+
+            break;
+        }
+        blist = blist->next;
+    }
+}
+
+int br_check(struct brk_struct *blist, struct user_regs_struct regs)
+{
+    while (blist != NULL)
+    {
+        if ((unsigned long)regs.rip - 1 == (unsigned long)blist->addr)
+        {
+            return 1;
+        }
+        blist = blist->next;
+    }
+    return 0;
+}

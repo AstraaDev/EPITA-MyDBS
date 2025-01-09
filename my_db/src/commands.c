@@ -5,10 +5,11 @@
 #include <string.h>
 #include <sys/ptrace.h>
 
+#include "utils.h"
+
 int prog_next(char **input_parse, int nbArg, int pid, struct brk_struct *blist,
               int *status)
 {
-    struct user_regs_struct regs = { 0 };
     int countStep;
 
     switch (nbArg)
@@ -21,47 +22,19 @@ int prog_next(char **input_parse, int nbArg, int pid, struct brk_struct *blist,
         break;
     }
 
+    struct user_regs_struct regs = { 0 };
     int currentStep = 0;
 
-    while (1)
+    over_br(pid, blist, status);
+
+    while (currentStep < countStep)
     {
-        if (currentStep >= countStep)
-            break;
-
-        ptrace(PTRACE_GETREGS, pid, NULL, &regs);
-
-        int syscall_number = regs.rax;
-
-        if (syscall_number == -1)
-        {
-            while (blist != NULL)
-            {
-                if ((unsigned long)regs.rip - 1 == (unsigned long)blist->addr)
-                {
-                    ptrace(PTRACE_POKETEXT, pid, blist->addr, blist->oldVal);
-
-                    regs.rip = (long long unsigned int)blist->addr;
-
-                    ptrace(PTRACE_SETREGS, pid, NULL, &regs);
-
-                    ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
-
-                    waitpid(pid, status, 0);
-
-                    unsigned long br_value = (blist->oldVal & ~0xFF) | 0xCC;
-
-                    ptrace(PTRACE_POKETEXT, pid, blist->addr, br_value);
-
-                    break;
-                }
-                blist = blist->next;
-            }
-        }
-
         ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
         waitpid(pid, status, 0);
 
-        if (WIFEXITED(*status))
+        ptrace(PTRACE_GETREGS, pid, NULL, &regs);
+
+        if (WIFEXITED(*status) || br_check(blist, regs))
             break;
 
         // prog_backtrace(pid, regs);
@@ -75,31 +48,7 @@ int prog_next(char **input_parse, int nbArg, int pid, struct brk_struct *blist,
 
 int prog_continue(int pid, struct brk_struct *blist, int *status)
 {
-    struct user_regs_struct regs = { 0 };
-    ptrace(PTRACE_GETREGS, pid, NULL, &regs);
-
-    while (blist != NULL)
-    {
-        if ((unsigned long)regs.rip - 1 == (unsigned long)blist->addr)
-        {
-            ptrace(PTRACE_POKETEXT, pid, blist->addr, blist->oldVal);
-
-            regs.rip = (long long unsigned int)blist->addr;
-
-            ptrace(PTRACE_SETREGS, pid, NULL, &regs);
-
-            ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
-
-            waitpid(pid, status, 0);
-
-            unsigned long br_value = (blist->oldVal & ~0xFF) | 0xCC;
-
-            ptrace(PTRACE_POKETEXT, pid, blist->addr, br_value);
-
-            break;
-        }
-        blist = blist->next;
-    }
+    over_br(pid, blist, status);
 
     ptrace(PTRACE_CONT, pid, NULL, NULL);
     waitpid(pid, status, 0);

@@ -1,8 +1,8 @@
 CFLAGS = -std=c99 -pedantic -Wall -Wextra -Wvla -Werror -g -fsanitize=address
 CC = gcc
-OBJ = src/my_db.o src/utils.o src/commands.c
+OBJ = src/my_db.o src/utils.o src/commands.o
 BIN = my_db
-SRC = src/my_db.c src/utils.c src/commands.o
+SRC = src/my_db.c src/utils.c src/commands.c
 
 all: $(BIN)
 
