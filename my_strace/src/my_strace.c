@@ -13,6 +13,14 @@
 long *fbd_sys = NULL;
 size_t fbd_count = 0;
 
+long recover_sys_index(char *arg)
+{
+    for (long i = 0; i < 300; i++)
+	if (strcmp(arg, syscall_names[i]) == 0)
+	    return i;
+    return -1;
+}
+
 int is_sys_fbd(long syscall_number)
 {
     for (size_t i = 0; i < fbd_count; i++)
@@ -29,11 +37,18 @@ void load_fbd_sys(int argc, char *argv[])
         fbd_sys = malloc(fbd_count * sizeof(long));
         if (!fbd_sys)
 	{
-            fprintf(stderr, "Error: Unable to allocate memory for forbidden syscalls.\n");
+            fprintf(stderr, "my_strace: Error: Unable to allocate memory for forbidden syscalls.\n");
             exit(EXIT_FAILURE);
         }
         for (size_t i = 0; i < fbd_count; i++)
-            fbd_sys[i] = atol(argv[i + 2]);
+	{
+            fbd_sys[i] = recover_sys_index(argv[i + 2]);
+	    if (fbd_sys[i] == -1)
+	    {
+		fprintf(stderr, "my_strace: Error: Invalid syscall name : %s\n", argv[i + 2]);
+           	exit(EXIT_FAILURE);
+	    }
+	}
     }
 }
 
@@ -48,12 +63,8 @@ char *get_syscall_name(long syscall_number)
 SysCall *getArgSyscall(char *name)
 {
     for (int i = 0; i < 80; i++)
-    {
         if (!strcmp(sysArgList[i].name, name))
-        {
             return &sysArgList[i];
-        }
-    }
     return NULL;
 }
 
@@ -116,10 +127,10 @@ int main(int argc, char *argv[], char *envp[])
 {
     if (argc < 2)
     {
-        fprintf(stderr, "my_strace: Usage: ./my_strace <file_path> [forbidden_syscalls_numbers]\n");
+        fprintf(stderr, "my_strace: Usage: ./my_strace <file_path> [forbidden_syscalls]\n");
         return 1;
     }
-
+    
     load_fbd_sys(argc, argv);
 
     int pid = fork();
