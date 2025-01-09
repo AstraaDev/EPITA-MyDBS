@@ -5,10 +5,10 @@
 #include <string.h>
 #include <sys/ptrace.h>
 
-int prog_next(char **input_parse, int nbArg, int pid, long *syscall_number,
-              struct user_regs_struct *regs, struct brk_struct *blist)
+int prog_next(char **input_parse, int nbArg, int pid, struct brk_struct *blist,
+              int *status)
 {
-    int status = 0;
+    struct user_regs_struct regs = { 0 };
     int countStep;
 
     switch (nbArg)
@@ -28,25 +28,25 @@ int prog_next(char **input_parse, int nbArg, int pid, long *syscall_number,
         if (currentStep >= countStep)
             break;
 
-        ptrace(PTRACE_GETREGS, pid, NULL, regs);
+        ptrace(PTRACE_GETREGS, pid, NULL, &regs);
 
-        *syscall_number = regs->rax;
+        int syscall_number = regs.rax;
 
-        if (*syscall_number == -1)
+        if (syscall_number == -1)
         {
             while (blist != NULL)
             {
-                if ((unsigned long)regs->rip - 1 == (unsigned long)blist->addr)
+                if ((unsigned long)regs.rip - 1 == (unsigned long)blist->addr)
                 {
                     ptrace(PTRACE_POKETEXT, pid, blist->addr, blist->oldVal);
 
-                    regs->rip = (long long unsigned int)blist->addr;
+                    regs.rip = (long long unsigned int)blist->addr;
 
-                    ptrace(PTRACE_SETREGS, pid, NULL, regs);
+                    ptrace(PTRACE_SETREGS, pid, NULL, &regs);
 
                     ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
 
-                    waitpid(pid, &status, 0);
+                    waitpid(pid, status, 0);
 
                     unsigned long br_value = (blist->oldVal & ~0xFF) | 0xCC;
 
@@ -59,39 +59,38 @@ int prog_next(char **input_parse, int nbArg, int pid, long *syscall_number,
         }
 
         ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
-        waitpid(pid, &status, 0);
+        waitpid(pid, status, 0);
 
-        if (WIFEXITED(status))
+        if (WIFEXITED(*status))
             break;
 
         // prog_backtrace(pid, regs);
 
         currentStep++;
     }
-    if (WIFEXITED(status))
+    if (WIFEXITED(*status))
         return 1;
     return 0;
 }
 
-int prog_continue(int pid, struct user_regs_struct *regs,
-                  struct brk_struct *blist)
+int prog_continue(int pid, struct brk_struct *blist, int *status)
 {
-    int status = 0;
-    ptrace(PTRACE_GETREGS, pid, NULL, regs);
+    struct user_regs_struct regs = { 0 };
+    ptrace(PTRACE_GETREGS, pid, NULL, &regs);
 
     while (blist != NULL)
     {
-        if ((unsigned long)regs->rip - 1 == (unsigned long)blist->addr)
+        if ((unsigned long)regs.rip - 1 == (unsigned long)blist->addr)
         {
             ptrace(PTRACE_POKETEXT, pid, blist->addr, blist->oldVal);
 
-            regs->rip = (long long unsigned int)blist->addr;
+            regs.rip = (long long unsigned int)blist->addr;
 
-            ptrace(PTRACE_SETREGS, pid, NULL, regs);
+            ptrace(PTRACE_SETREGS, pid, NULL, &regs);
 
             ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
 
-            waitpid(pid, &status, 0);
+            waitpid(pid, status, 0);
 
             unsigned long br_value = (blist->oldVal & ~0xFF) | 0xCC;
 
@@ -103,17 +102,18 @@ int prog_continue(int pid, struct user_regs_struct *regs,
     }
 
     ptrace(PTRACE_CONT, pid, NULL, NULL);
-    waitpid(pid, &status, 0);
+    waitpid(pid, status, 0);
 
-    if (WIFEXITED(status))
+    if (WIFEXITED(*status))
         return 1;
     return 0;
 }
 
-void prog_register(int pid, struct user_regs_struct *regs)
+void prog_register(int pid)
 {
-    ptrace(PTRACE_GETREGS, pid, NULL, regs);
-    print_register(*regs);
+    struct user_regs_struct regs = { 0 };
+    ptrace(PTRACE_GETREGS, pid, NULL, &regs);
+    print_register(regs);
 }
 
 void prog_memdump(char **input_parse, int pid)
@@ -267,9 +267,9 @@ void prog_blist(struct brk_fifo *brkfifo)
         i++;
     }
 }
-void prog_bdel(char **input_parse, int pid, struct brk_fifo *brkfifo,
-               struct user_regs_struct *regs)
+void prog_bdel(char **input_parse, int pid, struct brk_fifo *brkfifo)
 {
+    struct user_regs_struct regs = { 0 };
     size_t index = atoi(input_parse[1]);
     if (index <= 0 || index > brkfifo->size)
         printf("Bad argument !\n");
@@ -277,13 +277,13 @@ void prog_bdel(char **input_parse, int pid, struct brk_fifo *brkfifo,
     {
         struct brk_struct *brk = fifo_get(brkfifo, index);
 
-        ptrace(PTRACE_GETREGS, pid, NULL, regs);
+        ptrace(PTRACE_GETREGS, pid, NULL, &regs);
 
-        if ((unsigned long)regs->rip - 1 == (unsigned long)brk->addr)
+        if ((unsigned long)regs.rip - 1 == (unsigned long)brk->addr)
         {
-            regs->rip = (long long unsigned int)brk->addr;
+            regs.rip = (long long unsigned int)brk->addr;
 
-            ptrace(PTRACE_SETREGS, pid, NULL, regs);
+            ptrace(PTRACE_SETREGS, pid, NULL, &regs);
         }
 
         ptrace(PTRACE_POKETEXT, pid, brk->addr, brk->oldVal);
@@ -311,10 +311,11 @@ void prog_help()
     printf("+---------------------------------------+\n");
 }
 
-void prog_backtrace(int pid, struct user_regs_struct *regs)
+void prog_backtrace(int pid)
 {
-    ptrace(PTRACE_GETREGS, pid, NULL, regs);
-    uintptr_t rbp = regs->rbp;
+    struct user_regs_struct regs = { 0 };
+    ptrace(PTRACE_GETREGS, pid, NULL, &regs);
+    uintptr_t rbp = regs.rbp;
 
     uintptr_t return_address;
 

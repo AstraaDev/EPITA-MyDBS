@@ -15,17 +15,15 @@
 
 #include "utils.h"
 
-int prog_next(char **input_parse, int nbArg, int pid, long *syscall_number,
-              struct user_regs_struct *regs, struct brk_struct *blist);
-int prog_continue(int pid, struct user_regs_struct *regs,
-                  struct brk_struct *blist);
-void prog_register(int pid, struct user_regs_struct *regs);
+int prog_next(char **input_parse, int nbArg, int pid, struct brk_struct *blist,
+              int *status);
+int prog_continue(int pid, struct brk_struct *blist, int *status);
+void prog_register(int pid);
 void prog_memdump(char **input_parse, int pid);
 void prog_break(char **input_parse, int pid, struct brk_fifo *brkfifo);
 void prog_blist(struct brk_fifo *brkfifo);
-void prog_bdel(char **input_parse, int pid, struct brk_fifo *brkfifo,
-               struct user_regs_struct *regs);
+void prog_bdel(char **input_parse, int pid, struct brk_fifo *brkfifo);
 void prog_help();
-void prog_backtrace(int pid, struct user_regs_struct *regs);
+void prog_backtrace(int pid);
 
 #endif /* !COMMANDS_H */

@@ -31,9 +31,6 @@ int main(int argc, char *argv[], char *envp[])
 
     int status = 0;
 
-    struct user_regs_struct regs = { 0 };
-    long syscall_number;
-
     char user_input[4096] = { 0 };
 
     waitpid(pid, &status, 0);
@@ -60,7 +57,7 @@ int main(int argc, char *argv[], char *envp[])
         }
         else if (!strcmp(input_parse[0], "continue") && nbArg == 1)
         {
-            if (prog_continue(pid, &regs, brkfifo->head))
+            if (prog_continue(pid, brkfifo->head, &status))
                 break;
         }
         else if (!strcmp(input_parse[0], "quit") && nbArg == 1)
@@ -76,7 +73,7 @@ int main(int argc, char *argv[], char *envp[])
         }
         else if (!strcmp(input_parse[0], "register") && nbArg == 1)
         {
-            prog_register(pid, &regs);
+            prog_register(pid);
         }
         else if ((!strcmp(input_parse[0], "x") || !strcmp(input_parse[0], "d")
                   || !strcmp(input_parse[0], "u"))
@@ -87,8 +84,7 @@ int main(int argc, char *argv[], char *envp[])
         else if ((!strcmp(input_parse[0], "next"))
                  && (nbArg == 1 || nbArg == 2))
         {
-            if (prog_next(input_parse, nbArg, pid, &syscall_number, &regs,
-                          brkfifo->head))
+            if (prog_next(input_parse, nbArg, pid, brkfifo->head, &status))
                 break;
         }
         else if ((!strcmp(input_parse[0], "break")
@@ -104,7 +100,7 @@ int main(int argc, char *argv[], char *envp[])
         }
         else if (!strcmp(input_parse[0], "bdel") && nbArg == 2)
         {
-            prog_bdel(input_parse, pid, brkfifo, &regs);
+            prog_bdel(input_parse, pid, brkfifo);
         }
         else if (!strcmp(input_parse[0], "help"))
         {
@@ -112,15 +108,16 @@ int main(int argc, char *argv[], char *envp[])
         }
         else if (!strcmp(input_parse[0], "bt") && nbArg == 1)
         {
-            prog_backtrace(pid, &regs);
+            prog_backtrace(pid);
         }
         else
         {
             printf("Bad argument !\n");
         }
     }
+    waitpid(pid, &status, 0);
 
-    fprintf(stderr, "program exited with code %d\n", WEXITSTATUS(status));
+    fprintf(stderr, "program exited with code %d\n", status);
     free_parse(input_parse);
     fifo_destroy(brkfifo);
     return 0;
