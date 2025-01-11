@@ -32,6 +32,12 @@ The project consists of **three main tools** and one **bonus tool**:
 
 ---
 
+## ⚠️ Note on Optional Exercises
+
+As part of this project, our team has completed several optional exercises to enhance our learning experience. However, we would like to clarify that we do not wish for these exercises to be considered in our grading unless other teams have also completed them, thereby making these exercises mandatory for the entire class.
+
+---
+
 ## 🛠️ Installation
 
 ### Prerequisites
@@ -51,7 +57,7 @@ git clone <repository-url>
 ### Build the Project
 
 ```bash
-make all
+make
 ```
 
 ---
@@ -110,6 +116,7 @@ program exited with code 0
 ```
 **Description**:
 - Provides basic commands to control a running program:
+    - `help`: displays commands details.
     - `quit`: quit the debugger.
     - `kill`: kill the process being debugged.
     - `continue`: continue the process execution.
@@ -166,6 +173,8 @@ mydbs/
 │   └── src/
 │       ├── my_db.c
 │       ├── my_db.h
+│       ├── commands.c
+│       ├── commands.h
 │       ├── utils.c
 │       └── utils.h
 ├── my_nm/
@@ -189,7 +198,6 @@ mydbs/
 └── TODO.md
 ```
 </details>
-
 
 ---
 
