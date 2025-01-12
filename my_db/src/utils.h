@@ -44,5 +44,6 @@ void print_register(struct user_regs_struct regs);
 void *get_ptr_func(char *name, int pid);
 void over_br(int pid, struct brk_struct *blist, int *status);
 int br_check(struct brk_struct *blist, struct user_regs_struct regs);
+long long unsigned call_check(struct user_regs_struct *regs, int pid);
 
 #endif /* !UTILS_H */

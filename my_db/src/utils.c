@@ -297,3 +297,24 @@ int br_check(struct brk_struct *blist, struct user_regs_struct regs)
     }
     return 0;
 }
+
+long long unsigned call_check(struct user_regs_struct *regs, int pid)
+{
+    long long unsigned result =
+        ptrace(PTRACE_PEEKDATA, pid, (void *)regs->rip, NULL);
+
+    switch (result & 0xFF)
+    {
+    case 0xE8:
+        printf("E8");
+        return ptrace(PTRACE_PEEKDATA, pid, (void *)regs->rsp, NULL);
+    case 0xFF:
+        printf("FF");
+        return ptrace(PTRACE_PEEKDATA, pid, (void *)regs->rsp, NULL);
+    case 0x9A:
+        printf("9A");
+        return ptrace(PTRACE_PEEKDATA, pid, (void *)regs->rsp, NULL);
+    }
+
+    return 0;
+}

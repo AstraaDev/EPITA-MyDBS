@@ -186,9 +186,9 @@ void prog_break(char **input_parse, int pid, struct brk_fifo *brkfifo)
         ptr = (void *)strtol(input_parse[1], NULL, 16);
     }
 
-    unsigned long aligned_address = 0x555555554000 + (unsigned long)ptr + 8;
+    unsigned long aligned_address = (unsigned long)ptr + 8;
 
-    if (aligned_address == 0x555555554008)
+    if (aligned_address == 0x17)
     {
         printf("Name or pointeur invalide.\n");
         free(brksymbol);
@@ -253,9 +253,10 @@ void prog_help()
     printf("| blist    -> Liste des breakpoints     |\n");
     printf("| bdel     -> Supprimer un breakpoint   |\n");
     printf("| x        -> Dump en hexa une valeur   |\n");
-    printf("| u        -> Dump en signed int        |\n");
+    printf("| u        -> Dump en non signe int     |\n");
     printf("| d        -> Dump en int               |\n");
     printf("| kill     -> Kill le programme fils    |\n");
+    printf("| bt       -> Display stacktrace        |\n");
     printf("| quit     -> Quitte le programme       |\n");
     printf("+---------------------------------------+\n");
 }
@@ -263,16 +264,31 @@ void prog_help()
 void prog_backtrace(int pid)
 {
     struct user_regs_struct regs = { 0 };
+    unsigned long rbp;
+    unsigned long rip;
+
     ptrace(PTRACE_GETREGS, pid, NULL, &regs);
-    uintptr_t rbp = regs.rbp;
 
-    uintptr_t return_address;
+    rbp = regs.rbp;
+    rip = regs.rip;
 
-    while (return_address != 0)
+    printf("Call stack:\n");
+
+    for (int i = 0; i < 128; i++)
     {
-        return_address = ptrace(PTRACE_PEEKDATA, pid, rbp, NULL);
-        printf("Return address: %lx\n", return_address);
+        printf("#%d 0x%lx in ...\n", i, rip);
 
-        rbp = rbp - sizeof(uintptr_t);
+        if (rbp == 0)
+            break;
+
+        errno = 0;
+        rip =
+            ptrace(PTRACE_PEEKDATA, pid, (void *)(rbp + sizeof(void *)), NULL);
+        if (errno != 0)
+            break;
+
+        rbp = ptrace(PTRACE_PEEKDATA, pid, (void *)rbp, NULL);
+        if (errno != 0)
+            break;
     }
 }
