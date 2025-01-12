@@ -88,7 +88,7 @@ make
 ### 2. **my_strace** - System Call Analysis
 **Usage**:
 ```bash
-./my_strace /path/to/binary
+./my_strace /path/to/binary [forbidden_syscalls]
 ```
 **Description**:
 - Displays the list of system calls made by a program.
@@ -96,7 +96,7 @@ make
 
 **Example**:
 ```bash
-42sh$ ./my_strace /bin/ls [forbidden_syscalls]
+42sh$ ./my_strace /bin/ls
 brk(addr = 0x0) = 93824992378880
 arch_prctl() = -22
 mmap(addr = 0x0, length = 8192, prot = 3, flags = -134308681, fd = -1, offset = 0) = 140737353854976
