@@ -63,9 +63,13 @@ char *get_syscall_name(long syscall_number)
 
 SysCall *getArgSyscall(char *name)
 {
-    for (int i = 0; i < 80; i++)
+    for (int i = 0; i < 89; i++)
+    {
         if (!strcmp(sysArgList[i].name, name))
-            return &sysArgList[i];
+	{
+	    return &sysArgList[i];
+        }
+    }
     return NULL;
 }
 

@@ -649,7 +649,8 @@ SysCall sysArgList[] = {
     { "rmdir", 1, { { "pathname", print_str } } },
     { "creat", 2, { { "pathname", print_str }, { "mode", print_int } } },
     { "link", 2, { { "oldpath", print_str }, { "newpath", print_str } } },
-    { "unlink", 1, { { "pathname", print_str } } }
+    { "unlink", 1, { { "pathname", print_str } } },
+    { "openat", 3, { { "fd", print_int }, { "path", print_str }, { "oflags", print_open_flags } } }
 };
 
 char *get_syscall_name(long syscall_number);
