@@ -28,7 +28,6 @@ The project consists of **three main tools** and one **bonus tool**:
 1. **my_nm**: Static analysis of ELF symbols.
 2. **my_strace**: Dynamic analysis of system calls.
 3. **my_db**: A minimalist debugger.
-4. **my_prof** *(Bonus)*: Performance profiler and call graph generator.
 
 ---
 
@@ -142,6 +141,7 @@ program exited with code 127
     - `break`: followed by an argument. This command puts a breakpoint to the given address. The argument must be an address (in hexadecimal or decimal) or a symbol from the binary (beware of the type, it should be a shame to put a breakpoint on a global variable).
     - `blist`: print the breakpoints list.
     - `bdel`: delete the breakpoint whose number is displayed in the list.
+    - `bt`: displays Callstack but only the address, not the name of the function.
 
 **Example**:
 ```bash
@@ -152,26 +152,6 @@ before breakpoint
 rax: 0x14 rbx: 0x7fffffffde08
 ...
 > quit
-```
-
----
-
-### 4. **my_prof** *(Bonus)* - Function Profiling
-**Usage**:
-```bash
-./my_prof -o output.txt /path/to/binary
-```
-**Description**:
-- Profiles the functions called in a program and generates a call graph.
-
-**Example**:
-```bash
-42sh$ ./my_prof −o dump.out ./debugme
-42sh$ cat dump.out
-func1 2
-test_function 42
-func72 0
-apping_are_the_best 27972
 ```
 
 ---
@@ -196,11 +176,6 @@ mydbs/
 │   └── src/
 │       ├── my_nm.c
 │       └── my_nm.h
-├── my_prof/
-│   ├── Makefile
-│   └── src/
-│       ├── my_prof.c
-│       └── my_prof.h
 ├── my_strace/
 │   ├── Makefile
 │   └── src/
