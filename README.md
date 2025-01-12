@@ -32,7 +32,7 @@ The project consists of **three main tools** and one **bonus tool**:
 
 ---
 
-## ⚠️ Note on Optional Exercises
+## ⚠️  Note on Optional Exercises
 
 As part of this project, our team has completed several optional exercises to enhance our learning experience. However, we would like to clarify that we do not wish for these exercises to be considered in our grading unless other teams have also completed them, thereby making these exercises mandatory for the entire class.
 
@@ -92,10 +92,11 @@ make
 ```
 **Description**:
 - Displays the list of system calls made by a program.
+- Filtering of syscalls allowed (Thresholds 3 bonus)
 
 **Example**:
 ```bash
-42sh$ ./my_strace /bin/ls
+42sh$ ./my_strace /bin/ls [forbidden_syscalls]
 brk(addr = 0x0) = 93824992378880
 arch_prctl() = -22
 mmap(addr = 0x0, length = 8192, prot = 3, flags = -134308681, fd = -1, offset = 0) = 140737353854976
@@ -105,6 +106,19 @@ write(fd = 1, buf = 0x555555578500, count = 25) = 25
 close(fd = 1) = 0
 close(fd = 2) = 0
 program exited with code 0
+```
+```bash
+42sh$ ./my_strace /bin/ls read
+brk(addr = 0x0) = 93824992378880
+arch_prctl() = -22
+mmap(addr = 0x0, length = 8192, prot = 3, flags = -134308681, fd = -1, offset = 0) = 140737353854976
+access(pathname = "/etc/ld.so.preload", mode = 4) = -2
+...
+forbidden syscall blocked: read
+close(fd = 3) = 0
+/bin/ls: error while loading shared libraries: /lib/x86_64-linux-gnu/libselinux.so.1: cannot read file data: Operation not permitted
+writev(fd = 2, iov = 0x7fffffffd040, iovcnt = 10) = 133
+program exited with code 127
 ```
 
 ---

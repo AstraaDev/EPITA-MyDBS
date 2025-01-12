@@ -15,7 +15,8 @@ size_t fbd_count = 0;
 
 long recover_sys_index(char *arg)
 {
-    for (long i = 0; i < 300; i++)
+    int syscall_count = sizeof(syscall_names) / sizeof(char *);
+    for (long i = 0; i < syscall_count; i++)
 	if (strcmp(arg, syscall_names[i]) == 0)
 	    return i;
     return -1;
