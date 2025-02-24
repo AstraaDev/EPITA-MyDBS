@@ -24,16 +24,10 @@
 
 **My Debugging Suite** is a project developed as part of the APP ING1 course at EPITA. The project introduces you to static and dynamic analysis of ELF binaries by implementing tools similar to `nm`, `strace`, and `gdb`.
 
-The project consists of **three main tools** and one **bonus tool**:
+The project consists of **three main tools**:
 1. **my_nm**: Static analysis of ELF symbols.
 2. **my_strace**: Dynamic analysis of system calls.
 3. **my_db**: A minimalist debugger.
-
----
-
-## ⚠️  Note on Optional Exercises
-
-As part of this project, our team has completed several optional exercises to enhance our learning experience. However, we would like to clarify that we do not wish for these exercises to be considered in our grading unless other teams have also completed them, thereby making these exercises mandatory for the entire class.
 
 ---
 
@@ -50,7 +44,7 @@ As part of this project, our team has completed several optional exercises to en
 ### Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/AstraaDev/EPITA-MyDBS.git
 ```
 
 ### Build the Project
@@ -153,44 +147,3 @@ rax: 0x14 rbx: 0x7fffffffde08
 ...
 > quit
 ```
-
----
-
-## 📂 Project Structure
-<details>
-<summary>42sh$ tree ./EPITA-MyDBS</summary>
-
-```bash
-mydbs/
-├── my_db/
-│   ├── Makefile
-│   └── src/
-│       ├── my_db.c
-│       ├── my_db.h
-│       ├── commands.c
-│       ├── commands.h
-│       ├── utils.c
-│       └── utils.h
-├── my_nm/
-│   ├── Makefile
-│   └── src/
-│       ├── my_nm.c
-│       └── my_nm.h
-├── my_strace/
-│   ├── Makefile
-│   └── src/
-│       ├── my_strace.c
-│       ├── my_strace.h
-│       ├── utils.c
-│       └── utils.h
-├── README.md
-└── TODO.md
-```
-</details>
-
----
-
-## 👨‍💻 Authors
-
-- **Killian Heritier** - *Project Manager* - [killian.heritier@epita.fr](mailto:killian.heritier@epita.fr)
-- **Paul Baudinot** - *Project Manager* - [paul.baudinot@epita.fr](mailto:paul.baudinot@epita.fr)
